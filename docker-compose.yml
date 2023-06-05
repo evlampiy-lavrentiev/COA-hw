@@ -1,0 +1,14 @@
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy.Dockerfile
+    command: [ "2001", "proxy" ]
+    ports:
+      - "2000:2000/udp"
+
+  native:
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
+    command: [ "3000", "native" ]
