@@ -17,16 +17,12 @@ func MakeUDPConnector(IP string, port uint) *net.UDPConn {
 	return UDPconn
 }
 
-func MakeDialUDPConnector(IP string, port uint) *net.UDPConn {
-	addr := net.UDPAddr{
-		Port: int(port),
-		IP:   net.ParseIP(IP),
-	}
-	UDPconn, err := net.DialUDP("udp", nil, &addr)
+func MakeDialConnector(IP string, port uint) *net.Conn {
+	conn, err := net.Dial("udp", "native:1111")
 	if err != nil {
 		log.Panicf("Error creating UDP connector %v\n", err)
 	}
-	return UDPconn
+	return &conn
 }
 
 func MakeMulticastUDPConnector(IP string, port uint) *net.UDPConn {
