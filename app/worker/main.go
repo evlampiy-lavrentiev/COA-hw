@@ -9,9 +9,11 @@ import (
 	"time"
 
 	worker "github.com/evlampiy-lavrentiev/COA-hw/app/worker/core"
+	types "github.com/evlampiy-lavrentiev/COA-hw/app/worker/types"
 )
 
 type Worker struct {
+	Mode       string
 	Serializer worker.WorkerCore
 	Conn       net.PacketConn
 }
@@ -21,27 +23,28 @@ func MakeWorker(mode string, port int) *Worker {
 	if err != nil {
 		log.Panic(err)
 	}
-	return &Worker{Conn: conn}
+	return &Worker{
+		Mode: mode,
+		Conn: conn}
 }
 
 func (w *Worker) CalcResponce() string {
+	anek := types.MakeAnek()
+	bytes := make([]byte, 0)
+
 	start := time.Now()
 	for i := 0; i < 1000; i++ {
-		bytes, err := w.Serializer.Serialize(person)
+		bytes = w.Serializer.Serialize(anek)
 	}
-		totalTimeSerialize += time.Since(start).Microseconds()
-		if err != nil {
-			return "", fmt.Errorf("failed to serialize string: %v", err)
-		}
-		totalStructSize += len(bytes)
+	ser_ms := float64(time.Since(start).Nanoseconds()) / 1e6
 
-		start = time.Now()
-		_, err = converter.Deserialize(bytes)
-		totalTimeDeserialize += time.Since(start).Microseconds()
-		if err != nil {
-			return "", fmt.Errorf("failed to deserialize string: %v", err)
-		}
+	start = time.Now()
+	for i := 0; i < 1000; i++ {
+		_ = w.Serializer.Deserialize(bytes)
 	}
+	deser_ms := float64(time.Since(start).Nanoseconds()) / 1e6
+
+	return fmt.Sprintf("%s - %v - %vus - %vus", w.Mode, len(bytes), ser_ms, deser_ms)
 }
 
 func main() {
@@ -55,6 +58,8 @@ func main() {
 		w.Serializer = worker.NativeWorkerCore{}
 	case "xml":
 		w.Serializer = worker.XmlWorkerCore{}
+	case "json":
+		w.Serializer = worker.JsonWorkerCore{}
 	default:
 		log.Panic("Not implemented")
 	}
@@ -69,7 +74,7 @@ func main() {
 			log.Printf("Error reading from %v", err)
 			continue
 		}
-		bytesResponse := []byte(w.Serializer.FetchResult())
+		bytesResponse := []byte(w.CalcResponce())
 		go w.Conn.WriteTo(bytesResponse, remoteaddr)
 	}
 }

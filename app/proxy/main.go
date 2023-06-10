@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/evlampiy-lavrentiev/COA-hw/util"
 )
@@ -62,6 +63,7 @@ func (s *Proxy) handleGetResult(w http.ResponseWriter, r *http.Request) {
 	workers_cnt := 1
 	switch format {
 	case "all":
+		workers_cnt = len(s.Connections)
 		log.Fatalf("not impl YET")
 	default:
 		conn, ok := s.Connections[format]
@@ -77,7 +79,7 @@ func (s *Proxy) handleGetResult(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < workers_cnt; i++ {
 		answers = append(answers, <-s.ResponseChan)
 	}
-	fmt.Fprintf(w, "Results:\n%s", answers)
+	fmt.Fprintf(w, "Results:\n%s\n", strings.Join(answers, "\n"))
 }
 
 func main() {
