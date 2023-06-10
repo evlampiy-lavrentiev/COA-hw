@@ -8,11 +8,11 @@ import (
 type StringMap map[string]string
 
 type Anek struct {
-	Str   string    `protobuf:"bytes,1,opt,name=str"`
-	Int   int       `protobuf:"varint,2,opt,name=int"`
-	Arr   []int     `protobuf:"varint,3,rep,name=arr"`
-	Dict  StringMap `protobuf:"bytes,4,rep,name=dict"`
-	Float float64   `protobuf:"fixed64,5,opt,name=float"`
+	Str   string    `protobuf:"bytes,1,opt,name=str,proto3"`
+	Int   int       `protobuf:"varint,2,opt,name=int,proto3"`
+	Arr   []int     `protobuf:"varint,3,rep,name=arr,proto3"`
+	Dict  StringMap `protobuf:"bytes,4,rep,name=dict,proto3" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Float float64   `protobuf:"fixed64,5,opt,name=float,proto3"`
 }
 
 func MakeAnek() *Anek {
