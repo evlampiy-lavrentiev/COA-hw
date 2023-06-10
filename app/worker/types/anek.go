@@ -3,18 +3,16 @@ package types
 import (
 	"encoding/xml"
 	"io"
-
-	pb "github.com/evlampiy-lavrentiev/COA-hw/anek.pb"
 )
 
 type StringMap map[string]string
 
 type Anek struct {
-	Str   string
-	Int   int
-	Arr   []int
-	Dict  StringMap
-	Float float64
+	Str   string    `protobuf:"bytes,1,opt,name=str"`
+	Int   int       `protobuf:"varint,2,opt,name=int"`
+	Arr   []int     `protobuf:"varint,3,rep,name=arr"`
+	Dict  StringMap `protobuf:"bytes,4,rep,name=dict"`
+	Float float64   `protobuf:"fixed64,5,opt,name=float"`
 }
 
 func MakeAnek() *Anek {
@@ -71,24 +69,4 @@ func (m *StringMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		(*m)[e.XMLName.Local] = e.Value
 	}
 	return nil
-}
-
-func (anek *Anek) ConvertToProto() *pb.Anek {
-	return &pb.Anek{
-		Str:   anek.Str,
-		Int:   int64(anek.Int),
-		Arr:   anek.Arr,
-		Dict:  anek.Dict,
-		Float: anek.Float,
-	}
-}
-
-func (protoAnek *pb.Anek) ConvertToAnek(pb *Anek) *Anek {
-	return &Anek{
-		Str:   protoAnek.Str,
-		Int:   protoAnek.Int,
-		Arr:   protoAnek.Arr,
-		Dict:  protoAnek.Dict,
-		Float: protoAnek.Float,
-	}
 }
