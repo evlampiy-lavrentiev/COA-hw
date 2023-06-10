@@ -7,4 +7,4 @@ RUN go mod download
 
 COPY . .
 
-ENTRYPOINT ["go", "run", "app/proxy/main.go"]
+ENTRYPOINT ["go", "run", "app/worker/main.go"]

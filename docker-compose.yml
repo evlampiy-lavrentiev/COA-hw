@@ -3,12 +3,19 @@ services:
     build:
       context: .
       dockerfile: proxy.Dockerfile
-    command: [ "2001", "proxy" ]
+    command: [ "proxy" ]
     ports:
-      - "2000:2000/udp"
+      - "2000:2000"
 
   native:
     build:
       context: .
       dockerfile: worker.Dockerfile
-    command: [ "3000", "native" ]
+    command: [ "1111", "native" ]
+
+
+  xml:
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
+    command: [ "2222", "xml" ]

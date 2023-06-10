@@ -3,6 +3,7 @@ package util
 import (
 	"log"
 	"net"
+	"strconv"
 )
 
 func MakeUDPConnector(IP string, port uint) *net.UDPConn {
@@ -17,8 +18,8 @@ func MakeUDPConnector(IP string, port uint) *net.UDPConn {
 	return UDPconn
 }
 
-func MakeDialConnector(IP string, port uint) *net.Conn {
-	conn, err := net.Dial("udp", "native:1111")
+func MakeDialConnector(host string, port int) *net.Conn {
+	conn, err := net.Dial("udp", host+":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panicf("Error creating UDP connector %v\n", err)
 	}
