@@ -4,13 +4,13 @@ import (
 	"log"
 
 	types "github.com/evlampiy-lavrentiev/COA-hw/app/worker/types"
-	"github.com/linkedin/goavro"
+	"github.com/hamba/avro"
 )
 
 const schemaJSON = `
 {
 	"type": "record",
-	"name": "Struct",
+	"name": "Anek",
 	"fields": [
 		{"name": "Str", "type": "string"},
         {"name": "Arr", "type": {"type": "array", "items": "int"}},
@@ -24,11 +24,9 @@ type AvroWorkerCore struct {
 }
 
 func (nw AvroWorkerCore) Serialize(anek *types.Anek) []byte {
-	schema, err := goavro.NewCodec(schemaJSON)
-	if err != nil {
-		log.Panic(err)
-	}
-	res, err := schema.BinaryFromNative(nil, anek)
+	schema, _ := avro.Parse(schemaJSON)
+	res, err := avro.Marshal(schema, anek)
+
 	if err != nil {
 		log.Panic(err)
 	}
@@ -36,14 +34,11 @@ func (nw AvroWorkerCore) Serialize(anek *types.Anek) []byte {
 }
 
 func (nw AvroWorkerCore) Deserialize(buf []byte) *types.Anek {
-	schema, err := goavro.NewCodec(schemaJSON)
+	res := &types.Anek{}
+	schema, _ := avro.Parse(schemaJSON)
+	err := avro.Unmarshal(schema, buf, res)
 	if err != nil {
 		log.Panic(err)
 	}
-	res, _, err := schema.NativeFromBinary(buf)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	return res.(*types.Anek)
+	return res
 }

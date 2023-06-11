@@ -6,16 +6,19 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	worker "github.com/evlampiy-lavrentiev/COA-hw/app/worker/core"
 	types "github.com/evlampiy-lavrentiev/COA-hw/app/worker/types"
+	"github.com/evlampiy-lavrentiev/COA-hw/util"
 )
 
 type Worker struct {
-	Mode       string
-	Serializer worker.WorkerCore
-	Conn       net.PacketConn
+	Mode          string
+	Serializer    worker.WorkerCore
+	Conn          net.PacketConn
+	MulticastConn *net.UDPConn
 }
 
 func MakeWorker(mode string, port int) *Worker {
@@ -24,8 +27,10 @@ func MakeWorker(mode string, port int) *Worker {
 		log.Panic(err)
 	}
 	return &Worker{
-		Mode: mode,
-		Conn: conn}
+		Mode:          mode,
+		Conn:          conn,
+		MulticastConn: util.MakeMulticastUDPConnector(os.Getenv("MULTICAST_ADDRESS")),
+	}
 }
 
 func (w *Worker) CalcResponce() string {
@@ -48,6 +53,7 @@ func (w *Worker) CalcResponce() string {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	port, _ := strconv.Atoi(os.Args[1])
 	mode := os.Args[2]
 
@@ -60,21 +66,55 @@ func main() {
 		w.Serializer = worker.XmlWorkerCore{}
 	case "json":
 		w.Serializer = worker.JsonWorkerCore{}
+	case "proto":
+		w.Serializer = worker.ProtoWorkerCore{}
+	case "avro":
+		w.Serializer = worker.AvroWorkerCore{}
+	case "yaml":
+		w.Serializer = worker.YamlWorkerCore{}
+	case "mpack":
+		w.Serializer = worker.MPackWorkerCore{}
 	default:
 		log.Panic("Not implemented")
 	}
 
-	p := make([]byte, 2048)
-	log.Printf("Start %s worker loop at port=%v", mode, port)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	for {
-		n, remoteaddr, err := w.Conn.ReadFrom(p)
-		log.Printf("Read a message from %v %s", remoteaddr, p[:n])
-		if err != nil {
-			log.Printf("Error reading from %v", err)
-			continue
+	go func() {
+		p := make([]byte, 2048)
+		defer wg.Done()
+		for {
+			n, remoteaddr, err := w.Conn.ReadFrom(p)
+			log.Printf("Read message from %v %s", remoteaddr, p[:n])
+			if err != nil {
+				log.Printf("Error reading from %v", err)
+				continue
+			}
+			bytesResponse := []byte(w.CalcResponce())
+			go w.Conn.WriteTo(bytesResponse, remoteaddr)
 		}
-		bytesResponse := []byte(w.CalcResponce())
-		go w.Conn.WriteTo(bytesResponse, remoteaddr)
-	}
+	}()
+
+	go func() {
+		p2 := make([]byte, 2048)
+		defer wg.Done()
+		for {
+			_, remoteaddr, err := w.MulticastConn.ReadFromUDP(p2)
+
+			log.Printf("Get multicast msg from %v", remoteaddr)
+			if err != nil {
+				log.Printf("Error reading from %v", err)
+				continue
+			}
+			bytesResponse := []byte(w.CalcResponce())
+			_, err = w.MulticastConn.WriteToUDP(bytesResponse, remoteaddr)
+			if err != nil {
+				log.Printf("error sending response to Proxy. Error: %s", err)
+			}
+		}
+	}()
+
+	log.Printf("Started %s!", mode)
+	wg.Wait()
 }

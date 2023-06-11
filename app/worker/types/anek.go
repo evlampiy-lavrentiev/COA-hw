@@ -3,14 +3,16 @@ package types
 import (
 	"encoding/xml"
 	"io"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type StringMap map[string]string
 
 type Anek struct {
 	Str   string    `protobuf:"bytes,1,opt,name=str,proto3"`
-	Int   int       `protobuf:"varint,2,opt,name=int,proto3"`
-	Arr   []int     `protobuf:"varint,3,rep,name=arr,proto3"`
+	Int   int32     `protobuf:"varint,2,opt,name=int,proto3"`
+	Arr   []int32   `protobuf:"varint,3,rep,name=arr,proto3"`
 	Dict  StringMap `protobuf:"bytes,4,rep,name=dict,proto3" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	Float float64   `protobuf:"fixed64,5,opt,name=float,proto3"`
 }
@@ -22,7 +24,7 @@ func MakeAnek() *Anek {
 0 - мотивации
 7 - перекуров за час`,
 		Int: 228,
-		Arr: []int{1, 3, 3, 7},
+		Arr: []int32{1, 3, 3, 7},
 		Dict: map[string]string{
 			"Rzaka": "9-10",
 			"Smysl": "5-6",
@@ -69,4 +71,13 @@ func (m *StringMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		(*m)[e.XMLName.Local] = e.Value
 	}
 	return nil
+}
+
+func (anek *Anek) Reset() {
+	*anek = Anek{}
+}
+func (anek *Anek) String() string {
+	return proto.CompactTextString(anek)
+}
+func (_ *Anek) ProtoMessage() {
 }
